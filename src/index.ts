@@ -26,7 +26,11 @@ export async function compile(code: string, filename: string) {
   })
 
   return addTrailingSpace(
-    trimLeadingNewlines(generate(stripAtFlowAnnotation(ast)).code)
+    trimLeadingNewlines(
+      generate(stripAtFlowAnnotation(ast), {
+        retainLines: true
+      }).code
+    )
   )
 }
 

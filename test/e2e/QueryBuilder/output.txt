@@ -1,13 +1,13 @@
 /* Taken from graphile-engine */
+
 class QueryBuilder {
   parentQueryBuilder: QueryBuilder | undefined;
   context: GraphQLContext;
   rootValue: any; // eslint-disable-line flowtype/no-weak-types
-
   supportsJSONB: boolean;
   locks: {
-    [a: string]: false | true | string;
-  };
+    [a: string]: false | true | string;};
+
   finalized: boolean;
   selectedIdentifiers: boolean;
   data: {
@@ -19,8 +19,8 @@ class QueryBuilder {
     where: Array<SQLGen>;
     whereBound: {
       lower: Array<SQLGen>;
-      upper: Array<SQLGen>;
-    };
+      upper: Array<SQLGen>;};
+
     orderBy: Array<[SQLGen, boolean, boolean | null]>;
     orderIsUnique: boolean;
     limit: NumberGen | null | undefined;
@@ -28,14 +28,14 @@ class QueryBuilder {
     first: number | null | undefined;
     last: number | null | undefined;
     beforeLock: {
-      [a: string]: Array<() => undefined> | null;
-    };
+      [a: string]: Array<() => undefined> | null;};
+
     cursorComparator: CursorComparator | null | undefined;
-    liveConditions: Array< // eslint-disable-next-line flowtype/no-weak-types
-    [(data: {}) => (record: any) => boolean, {
-      [key: string]: SQL;
-    } | undefined]>;
-  };
+    liveConditions: Array<
+    // eslint-disable-next-line flowtype/no-weak-types
+    [(data: {}) => (record: any) => boolean, {[key: string]: SQL;} | undefined]>;};
+
+
   compiledData: {
     cursorPrefix: Array<string>;
     select: Array<[SQL, RawAlias]>;
@@ -45,25 +45,33 @@ class QueryBuilder {
     where: Array<SQL>;
     whereBound: {
       lower: Array<SQL>;
-      upper: Array<SQL>;
-    };
+      upper: Array<SQL>;};
+
     orderBy: Array<[SQL, boolean, boolean | null]>;
     orderIsUnique: boolean;
     limit: number | null | undefined;
     offset: number | null | undefined;
     first: number | null | undefined;
     last: number | null | undefined;
-    cursorComparator: CursorComparator | null | undefined;
-  };
-  lockContext: {
-    queryBuilder: QueryBuilder;
-  };
+    cursorComparator: CursorComparator | null | undefined;};
 
-  constructor(options: QueryBuilderOptions = {}, context: GraphQLContext = {}, rootValue?: any // eslint-disable-line flowtype/no-weak-types
+  lockContext: {
+    queryBuilder: QueryBuilder;};
+
+
+  constructor(
+  options: QueryBuilderOptions = {},
+  context: GraphQLContext = {},
+  rootValue?: any // eslint-disable-line flowtype/no-weak-types
   ) {
     this.context = context || {};
     this.rootValue = rootValue;
-    this.supportsJSONB = typeof options.supportsJSONB === "undefined" || options.supportsJSONB === null ? true : !!options.supportsJSONB;
+    this.supportsJSONB =
+    typeof options.supportsJSONB === "undefined" ||
+    options.supportsJSONB === null ?
+    true :
+    !!options.supportsJSONB;
+
     this.locks = {
       // As a performance optimisation, we're going to list a number of lock
       // types so that V8 doesn't need to mutate the object too much
@@ -79,8 +87,8 @@ class QueryBuilder {
       first: false,
       last: false,
       limit: false,
-      offset: false
-    };
+      offset: false };
+
     this.finalized = false;
     this.selectedIdentifiers = false;
     this.data = {
@@ -93,8 +101,8 @@ class QueryBuilder {
       where: [],
       whereBound: {
         lower: [],
-        upper: []
-      },
+        upper: [] },
+
       orderBy: [],
       orderIsUnique: false,
       limit: null,
@@ -116,11 +124,11 @@ class QueryBuilder {
         first: [],
         last: [],
         limit: [],
-        offset: []
-      },
+        offset: [] },
+
       cursorComparator: null,
-      liveConditions: []
-    };
+      liveConditions: [] };
+
     this.compiledData = {
       cursorPrefix: ["natural"],
       select: [],
@@ -130,24 +138,23 @@ class QueryBuilder {
       where: [],
       whereBound: {
         lower: [],
-        upper: []
-      },
+        upper: [] },
+
       orderBy: [],
       orderIsUnique: false,
       limit: null,
       offset: null,
       first: null,
       last: null,
-      cursorComparator: null
-    };
+      cursorComparator: null };
+
     this.beforeLock("select", () => {
       this.lock("selectCursor");
-
       if (this.compiledData.selectCursor) {
         this.select(this.compiledData.selectCursor, "__cursor");
       }
-    }); // 'whereBound' and 'natural' order might set offset/limit
-
+    });
+    // 'whereBound' and 'natural' order might set offset/limit
     this.beforeLock("where", () => {
       this.lock("whereBound");
     });
@@ -166,78 +173,111 @@ class QueryBuilder {
       this.lock("offset");
     });
     this.lockContext = Object.freeze({
-      queryBuilder: this
-    });
-  } // ----------------------------------------
+      queryBuilder: this });
+
+  }
+
+  // ----------------------------------------
+
   // Helper function
-
-
   jsonbBuildObject(fields: Array<[SQL, RawAlias]>) {
     if (this.supportsJSONB && fields.length > 50) {
       const fieldsChunks = chunk(fields, 50);
+      const chunkToJson = (fieldsChunk) =>
+      sql.fragment`jsonb_build_object(${sql.join(
+      fieldsChunk.map(
+      ([expr, alias]) =>
+      sql.fragment`${sql.literal(alias)}::text, ${expr}`),
 
-      const chunkToJson = fieldsChunk => sql.fragment`jsonb_build_object(${sql.join(fieldsChunk.map(([expr, alias]) => sql.fragment`${sql.literal(alias)}::text, ${expr}`), ", ")})`;
-
-      return sql.fragment`(${sql.join(fieldsChunks.map(chunkToJson), " || ")})::json`;
+      ", ")
+      })`;
+      return sql.fragment`(${sql.join(
+      fieldsChunks.map(chunkToJson),
+      " || ")
+      })::json`;
     } else {
       // PG9.4 will have issues with more than 100 parameters (50 keys)
-      return sql.fragment`json_build_object(${sql.join(fields.map(([expr, alias]) => sql.fragment`${sql.literal(alias)}::text, ${expr}`), ", ")})`;
-    }
-  } // ----------------------------------------
+      return sql.fragment`json_build_object(${sql.join(
+      fields.map(
+      ([expr, alias]) => sql.fragment`${sql.literal(alias)}::text, ${expr}`),
 
+      ", ")
+      })`;
+    }
+  }
+
+  // ----------------------------------------
 
   beforeLock(field: string, fn: () => undefined) {
     this.checkLock(field);
-
     if (!this.data.beforeLock[field]) {
       this.data.beforeLock[field] = [];
-    } // $FlowFixMe
-
-
+    }
+    // $FlowFixMe
     this.data.beforeLock[field].push(fn);
   }
 
-  makeLiveCollection(table: PgClass, // eslint-disable-next-line flowtype/no-weak-types
-  cb?: (checker: (data: any) => (record: any) => boolean) => undefined) {
+  makeLiveCollection(
+  table: PgClass,
+  // eslint-disable-next-line flowtype/no-weak-types
+  cb?: (checker: (data: any) => (record: any) => boolean) => undefined)
+  {
     /* the actual condition doesn't matter hugely, 'select' should work */
     if (!this.rootValue || !this.rootValue.liveConditions) return;
     const liveConditions = this.data.liveConditions;
-
     const checkerGenerator = data => {
       // Compute this once.
-      const checkers = liveConditions.map(([checkerGenerator]) => checkerGenerator(data));
+      const checkers = liveConditions.map(([checkerGenerator]) =>
+      checkerGenerator(data));
+
       return record => checkers.every(checker => checker(record));
     };
-
     if (this.parentQueryBuilder) {
       if (cb) {
-        throw new Error("Either use parentQueryBuilder or pass callback, not both.");
+        throw new Error(
+        "Either use parentQueryBuilder or pass callback, not both.");
+
       }
-
       this.parentQueryBuilder.beforeLock("select", () => {
-        const id = this.rootValue.liveConditions.push(checkerGenerator) - 1; // BEWARE: it's easy to override others' conditions, and that will cause issues. Be sensible.
+        const id = this.rootValue.liveConditions.push(checkerGenerator) - 1;
+        // BEWARE: it's easy to override others' conditions, and that will cause issues. Be sensible.
+        const allRequirements = this.data.liveConditions.reduce(
+        (memo, [_checkerGenerator, requirements]) =>
+        requirements ? Object.assign(memo, requirements) : memo,
+        {});
 
-        const allRequirements = this.data.liveConditions.reduce((memo, [_checkerGenerator, requirements]) => requirements ? Object.assign(memo, requirements) : memo, {}); // $FlowFixMe
-
-        this.parentQueryBuilder.select(sql.fragment`\
+        // $FlowFixMe
+        this.parentQueryBuilder.select(
+        sql.fragment`\
 json_build_object('__id', ${sql.value(id)}::int
-${sql.join(Object.keys(allRequirements).map(key => sql.fragment`, ${sql.literal(key)}::text, ${allRequirements[key]}`), "")})`, "__live");
+${sql.join(
+        Object.keys(allRequirements).map(
+        key => sql.fragment`, ${sql.literal(key)}::text, ${allRequirements[key]}`),
+
+        "")
+        })`,
+        "__live");
+
       });
     } else if (cb) {
       cb(checkerGenerator);
     } else {
-      throw new Error("makeLiveCollection was called without parentQueryBuilder and without callback");
+      throw new Error(
+      "makeLiveCollection was called without parentQueryBuilder and without callback");
+
     }
   }
 
-  addLiveCondition( // eslint-disable-next-line flowtype/no-weak-types
-  checkerGenerator: (data: {}) => (record: any) => boolean, requirements?: {
-    [key: string]: SQL;
-  }) {
+  addLiveCondition(
+  // eslint-disable-next-line flowtype/no-weak-types
+  checkerGenerator: (data: {}) => (record: any) => boolean,
+  requirements?: {[key: string]: SQL;})
+  {
     if (requirements && !this.parentQueryBuilder) {
-      throw new Error("There's no parentQueryBuilder, so there cannot be requirements");
-    }
+      throw new Error(
+      "There's no parentQueryBuilder, so there cannot be requirements");
 
+    }
     this.data.liveConditions.push([checkerGenerator, requirements]);
   }
 
@@ -246,22 +286,17 @@ ${sql.join(Object.keys(allRequirements).map(key => sql.fragment`, ${sql.literal(
     this.data.cursorComparator = fn;
     this.lock("cursorComparator");
   }
-
   addCursorCondition(cursorValue: CursorValue, isAfter: boolean) {
     this.beforeLock("whereBound", () => {
       this.lock("cursorComparator");
-
       if (!this.compiledData.cursorComparator) {
         throw new Error("No cursor comparator was set!");
       }
-
       this.compiledData.cursorComparator(cursorValue, isAfter);
     });
   }
-
   select(exprGen: SQLGen, alias: RawAlias) {
     this.checkLock("select");
-
     if (typeof alias === "string") {
       // To protect against vulnerabilities such as
       //
@@ -277,108 +312,104 @@ ${sql.join(Object.keys(allRequirements).map(key => sql.fragment`, ${sql.literal(
         throw new Error(`Disallowed alias '${alias}'.`);
       }
     }
-
     this.data.select.push([exprGen, alias]);
   }
-
   selectIdentifiers(table: PgClass) {
     if (this.selectedIdentifiers) return;
     const primaryKey = table.primaryKeyConstraint;
     if (!primaryKey) return;
     const primaryKeys = primaryKey.keyAttributes;
-    this.select(sql.fragment`json_build_array(${sql.join(primaryKeys.map(key => escapeLarge(sql.fragment`${this.getTableAlias()}.${sql.identifier(key.name)}`, key.type)), ", ")})`, "__identifiers");
+    this.select(
+    sql.fragment`json_build_array(${sql.join(
+    primaryKeys.map((key) =>
+    escapeLarge(
+    sql.fragment`${this.getTableAlias()}.${sql.identifier(key.name)}`,
+    key.type)),
+
+
+    ", ")
+    })`,
+    "__identifiers");
+
     this.selectedIdentifiers = true;
   }
-
   selectCursor(exprGen: SQLGen) {
     this.checkLock("selectCursor");
     this.data.selectCursor = exprGen;
   }
-
   from(expr: SQLGen, alias?: SQLAlias = sql.identifier(Symbol())) {
     this.checkLock("from");
-
     if (!expr) {
       throw new Error("No from table source!");
     }
-
     if (!alias) {
       throw new Error("No from alias!");
     }
-
     this.data.from = [expr, alias];
     this.lock("from");
-  } // XXX: join
-
-
+  }
+  // XXX: join
   where(exprGen: SQLGen) {
     this.checkLock("where");
     this.data.where.push(exprGen);
   }
-
   whereBound(exprGen: SQLGen, isLower: boolean) {
     if (typeof isLower !== "boolean") {
       throw new Error("isLower must be specified as a boolean");
     }
-
     this.checkLock("whereBound");
     this.data.whereBound[isLower ? "lower" : "upper"].push(exprGen);
   }
-
   setOrderIsUnique() {
     this.data.orderIsUnique = true;
   }
-
-  orderBy(exprGen: SQLGen, ascending: boolean = true, nullsFirst: boolean | null) {
+  orderBy(
+  exprGen: SQLGen,
+  ascending: boolean = true,
+  nullsFirst: boolean | null)
+  {
     this.checkLock("orderBy");
     this.data.orderBy.push([exprGen, ascending, nullsFirst]);
   }
-
   limit(limitGen: NumberGen) {
     this.checkLock("limit");
 
     if (this.data.limit != null) {
       throw new Error("Must only set limit once");
     }
-
     this.data.limit = limitGen;
   }
-
   offset(offsetGen: NumberGen) {
     this.checkLock("offset");
-
     if (this.data.offset != null) {
       // Add the offsets together (this should be able to recurse)
       const previous = this.data.offset;
-
       this.data.offset = context => {
-        return callIfNecessary(previous, context) + callIfNecessary(offsetGen, context);
+        return (
+          callIfNecessary(previous, context) +
+          callIfNecessary(offsetGen, context));
+
       };
     } else {
       this.data.offset = offsetGen;
     }
   }
-
   first(first: number) {
     this.checkLock("first");
-
     if (this.data.first != null) {
       throw new Error("Must only set first once");
     }
-
     this.data.first = first;
   }
-
   last(last: number) {
     this.checkLock("last");
-
     if (this.data.last != null) {
       throw new Error("Must only set last once");
     }
-
     this.data.last = last;
-  } // ----------------------------------------
+  }
 
+  // ----------------------------------------
 
   isOrderUnique(lock?: boolean = true) {
     if (lock) {
@@ -390,37 +421,28 @@ ${sql.join(Object.keys(allRequirements).map(key => sql.fragment`, ${sql.literal(
       return this.data.orderIsUnique;
     }
   }
-
   getTableExpression(): SQL {
     this.lock("from");
-
     if (!this.compiledData.from) {
       throw new Error("No from table has been supplied");
     }
-
     return this.compiledData.from[0];
   }
-
   getTableAlias(): SQL {
     this.lock("from");
-
     if (!this.compiledData.from) {
       throw new Error("No from table has been supplied");
     }
-
     return this.compiledData.from[1];
   }
-
   getSelectCursor() {
     this.lock("selectCursor");
     return this.compiledData.selectCursor;
   }
-
   getOffset() {
     this.lock("offset");
     return this.compiledData.offset || 0;
   }
-
   getFinalLimitAndOffset() {
     this.lock("offset");
     this.lock("limit");
@@ -429,7 +451,6 @@ ${sql.join(Object.keys(allRequirements).map(key => sql.fragment`, ${sql.literal(
     let limit = this.compiledData.limit;
     let offset = this.compiledData.offset || 0;
     let flip = false;
-
     if (this.compiledData.first != null) {
       if (limit != null) {
         limit = Math.min(limit, this.compiledData.first);
@@ -437,17 +458,18 @@ ${sql.join(Object.keys(allRequirements).map(key => sql.fragment`, ${sql.literal(
         limit = this.compiledData.first;
       }
     }
-
     if (this.compiledData.last != null) {
       if (offset > 0 && limit != null) {
-        throw new Error("Issue within pagination, please report your query to graphile-build");
-      }
+        throw new Error(
+        "Issue within pagination, please report your query to graphile-build");
 
+      }
       if (limit != null) {
         if (this.compiledData.last < limit) {
           offset = limit - this.compiledData.last;
           limit = this.compiledData.last;
-        } else {// no need to change anything
+        } else {
+          // no need to change anything
         }
       } else if (offset > 0) {
         throw new Error("Cannot combine 'last' and 'offset'");
@@ -460,158 +482,182 @@ ${sql.join(Object.keys(allRequirements).map(key => sql.fragment`, ${sql.literal(
         }
       }
     }
-
     return {
       limit,
       offset,
-      flip
-    };
-  }
+      flip };
 
+  }
   getFinalOffset() {
     return this.getFinalLimitAndOffset().offset;
   }
-
   getFinalLimit() {
     return this.getFinalLimitAndOffset().limit;
   }
-
   getOrderByExpressionsAndDirections() {
     this.lock("orderBy");
     return this.compiledData.orderBy;
   }
-
   getSelectFieldsCount() {
     this.lockEverything();
     return this.compiledData.select.length;
   }
-
   buildSelectFields() {
     this.lockEverything();
-    return sql.join(this.compiledData.select.map(([sqlFragment, alias]) => sql.fragment`to_json(${sqlFragment}) as ${sql.identifier(alias)}`), ", ");
-  }
+    return sql.join(
+    this.compiledData.select.map(
+    ([sqlFragment, alias]) =>
+    sql.fragment`to_json(${sqlFragment}) as ${sql.identifier(alias)}`),
 
+    ", ");
+
+  }
   buildSelectJson({
     addNullCase,
-    addNotDistinctFromNullCase
-  }: {
+    addNotDistinctFromNullCase }
+  : {
     addNullCase?: boolean;
-    addNotDistinctFromNullCase?: boolean;
-  }) {
+    addNotDistinctFromNullCase?: boolean;})
+  {
     this.lockEverything();
-    let buildObject = this.compiledData.select.length ? this.jsonbBuildObject(this.compiledData.select) : sql.fragment`to_json(${this.getTableAlias()})`;
-
+    let buildObject = this.compiledData.select.length ?
+    this.jsonbBuildObject(this.compiledData.select) :
+    sql.fragment`to_json(${this.getTableAlias()})`;
     if (addNotDistinctFromNullCase) {
       /*
-       * `is null` is not sufficient here because the record might exist but
-       * have null as each of its values; so we use `is not distinct from null`
-       * to assert that the record itself doesn't exist. This is typically used
-       * with column values.
-       */
+                                      * `is null` is not sufficient here because the record might exist but
+                                      * have null as each of its values; so we use `is not distinct from null`
+                                      * to assert that the record itself doesn't exist. This is typically used
+                                      * with column values.
+                                      */
       buildObject = sql.fragment`(case when (${this.getTableAlias()} is not distinct from null) then null else ${buildObject} end)`;
     } else if (addNullCase) {
       /*
-       * `is null` is probably used here because it's the result of a function;
-       * functions seem to have trouble differentiating between `null::my_type`
-       * and  `(null,null,null)::my_type`, always opting for the latter which
-       * then causes issues with the `GraphQLNonNull`s in the schema.
-       */
+                              * `is null` is probably used here because it's the result of a function;
+                              * functions seem to have trouble differentiating between `null::my_type`
+                              * and  `(null,null,null)::my_type`, always opting for the latter which
+                              * then causes issues with the `GraphQLNonNull`s in the schema.
+                              */
       buildObject = sql.fragment`(case when (${this.getTableAlias()} is null) then null else ${buildObject} end)`;
     }
-
     return buildObject;
   }
-
   buildWhereBoundClause(isLower: boolean) {
     this.lock("whereBound");
     const clauses = this.compiledData.whereBound[isLower ? "lower" : "upper"];
-
     if (clauses.length) {
       return sql.fragment`(${sql.join(clauses, ") and (")})`;
     } else {
       return sql.literal(true);
     }
   }
-
-  buildWhereClause(includeLowerBound: boolean, includeUpperBound: boolean, {
+  buildWhereClause(
+  includeLowerBound: boolean,
+  includeUpperBound: boolean,
+  {
     addNullCase,
-    addNotDistinctFromNullCase
-  }: {
-    addNullCase?: boolean;
-    addNotDistinctFromNullCase?: boolean;
-  }) {
+    addNotDistinctFromNullCase }
+  : {addNullCase?: boolean;addNotDistinctFromNullCase?: boolean;})
+  {
     this.lock("where");
     const clauses = [
     /*
-     * Okay... so this is quite interesting. When we're talking about
-     * composite types, `(foo is not null)` and `not (foo is null)` are NOT
-     * equivalent! Here's why:
-     *
-     * `(foo is null)`
-     *   true if every field of the row is null
-     *
-     * `(foo is not null)`
-     *   true if every field of the row is not null
-     *
-     * `not (foo is null)`
-     *   true if there's at least one field that is not null
-     *
-     * `is [not] distinct from null` does differentiate between these cases,
-     * but when a function returns something like `select * from my_table
-     * where false`, it actually returns `(null, null, null)::my_table`,
-     * which will cause issues when we apply the `GraphQLNonNull` constraints
-     * to the results - we want to treat this as null.
-     *
-     * So don't "simplify" the line below! We're probably checking if the
-     * result of a function call returning a compound type was indeed null.
-     */
-    ...(addNotDistinctFromNullCase ? [sql.fragment`(${this.getTableAlias()} is distinct from null)`] : addNullCase ? [sql.fragment`not (${this.getTableAlias()} is null)`] : []), ...this.compiledData.where, ...(includeLowerBound ? [this.buildWhereBoundClause(true)] : []), ...(includeUpperBound ? [this.buildWhereBoundClause(false)] : [])];
-    return clauses.length ? sql.fragment`(${sql.join(clauses, ") and (")})` : sql.fragment`1 = 1`;
-  }
+                      * Okay... so this is quite interesting. When we're talking about
+                      * composite types, `(foo is not null)` and `not (foo is null)` are NOT
+                      * equivalent! Here's why:
+                      *
+                      * `(foo is null)`
+                      *   true if every field of the row is null
+                      *
+                      * `(foo is not null)`
+                      *   true if every field of the row is not null
+                      *
+                      * `not (foo is null)`
+                      *   true if there's at least one field that is not null
+                      *
+                      * `is [not] distinct from null` does differentiate between these cases,
+                      * but when a function returns something like `select * from my_table
+                      * where false`, it actually returns `(null, null, null)::my_table`,
+                      * which will cause issues when we apply the `GraphQLNonNull` constraints
+                      * to the results - we want to treat this as null.
+                      *
+                      * So don't "simplify" the line below! We're probably checking if the
+                      * result of a function call returning a compound type was indeed null.
+                      */
+    ...(addNotDistinctFromNullCase ?
+    [sql.fragment`(${this.getTableAlias()} is distinct from null)`] :
+    addNullCase ?
+    [sql.fragment`not (${this.getTableAlias()} is null)`] :
+    []),
+    ...this.compiledData.where,
+    ...(includeLowerBound ? [this.buildWhereBoundClause(true)] : []),
+    ...(includeUpperBound ? [this.buildWhereBoundClause(false)] : [])];
 
-  build(options: {
+    return clauses.length ?
+    sql.fragment`(${sql.join(clauses, ") and (")})` :
+    sql.fragment`1 = 1`;
+  }
+  build(
+  options: {
     asJson?: boolean;
     asJsonAggregate?: boolean;
     onlyJsonField?: boolean;
     addNullCase?: boolean;
     addNotDistinctFromNullCase?: boolean;
-    useAsterisk?: boolean;
-  } = {}) {
+    useAsterisk?: boolean;} =
+  {})
+  {
     const {
       asJson = false,
       asJsonAggregate = false,
       onlyJsonField = false,
       addNullCase = false,
       addNotDistinctFromNullCase = false,
-      useAsterisk = false
-    } = options;
+      useAsterisk = false } =
+    options;
+
     this.lockEverything();
-
     if (onlyJsonField) {
-      return this.buildSelectJson({
-        addNullCase,
-        addNotDistinctFromNullCase
-      });
+      return this.buildSelectJson({ addNullCase, addNotDistinctFromNullCase });
     }
-
-    const {
-      limit,
-      offset,
-      flip
-    } = this.getFinalLimitAndOffset();
-    const fields = asJson || asJsonAggregate ? sql.fragment`${this.buildSelectJson({
+    const { limit, offset, flip } = this.getFinalLimitAndOffset();
+    const fields =
+    asJson || asJsonAggregate ?
+    sql.fragment`${this.buildSelectJson({
       addNullCase,
-      addNotDistinctFromNullCase
-    })} as object` : this.buildSelectFields();
+      addNotDistinctFromNullCase })
+    } as object` :
+    this.buildSelectFields();
+
     let fragment = sql.fragment`\
 select ${useAsterisk ? sql.fragment`${this.getTableAlias()}.*` : fields}
-${this.compiledData.from && sql.fragment`from ${this.compiledData.from[0]} as ${this.getTableAlias()}`}
+${this.compiledData.from &&
+    sql.fragment`from ${this.compiledData.from[0]} as ${this.getTableAlias()}`}
 ${this.compiledData.join.length && sql.join(this.compiledData.join, " ")}
 where ${this.buildWhereClause(true, true, options)}
-${this.compiledData.orderBy.length ? sql.fragment`order by ${sql.join(this.compiledData.orderBy.map(([expr, ascending, nullsFirst]) => sql.fragment`${expr} ${Number(ascending) ^ Number(flip) ? sql.fragment`ASC` : sql.fragment`DESC`}${nullsFirst === true ? sql.fragment` NULLS FIRST` : nullsFirst === false ? sql.fragment` NULLS LAST` : null}`), ",")}` : ""}
+${
+    this.compiledData.orderBy.length ?
+    sql.fragment`order by ${sql.join(
+    this.compiledData.orderBy.map(
+    ([expr, ascending, nullsFirst]) =>
+    sql.fragment`${expr} ${
+    Number(ascending) ^ Number(flip) ?
+    sql.fragment`ASC` :
+    sql.fragment`DESC`
+    }${
+    nullsFirst === true ?
+    sql.fragment` NULLS FIRST` :
+    nullsFirst === false ?
+    sql.fragment` NULLS LAST` :
+    null
+    }`),
+
+    ",")
+    }` :
+    ""
+    }
 ${isSafeInteger(limit) && sql.fragment`limit ${sql.literal(limit)}`}
 ${offset && sql.fragment`offset ${sql.literal(offset)}`}`;
-
     if (flip) {
       const flipAlias = Symbol();
       fragment = sql.fragment`\
@@ -622,87 +668,90 @@ select *
 from ${sql.identifier(flipAlias)}
 order by (row_number() over (partition by 1)) desc`;
     }
-
     if (useAsterisk) {
       fragment = sql.fragment`select ${fields} from (${fragment}) ${this.getTableAlias()}`;
     }
-
     if (asJsonAggregate) {
       const aggAlias = Symbol();
-      fragment = sql.fragment`select json_agg(${sql.identifier(aggAlias, "object")}) from (${fragment}) as ${sql.identifier(aggAlias)}`;
+      fragment = sql.fragment`select json_agg(${sql.identifier(
+      aggAlias,
+      "object")
+      }) from (${fragment}) as ${sql.identifier(aggAlias)}`;
       fragment = sql.fragment`select coalesce((${fragment}), '[]'::json)`;
     }
-
     return fragment;
-  } // ----------------------------------------
+  }
 
+  // ----------------------------------------
 
   _finalize() {
     this.finalized = true;
   }
-
   lock(type: string) {
     if (this.locks[type]) return;
     const context = this.lockContext;
-    const {
-      beforeLock
-    } = this.data;
+    const { beforeLock } = this.data;
     let locks = beforeLock[type];
-
     if (locks) {
       beforeLock[type] = [];
-
       for (let i = 0, l = locks.length; i < l; i++) {
         locks[i]();
       }
     }
-
     if (type !== "select") {
       this.locks[type] = isDev ? new Error("Initally locked here").stack : true;
     }
-
     if (type === "cursorComparator") {
       // It's meant to be a function
       this.compiledData[type] = this.data[type];
     } else if (type === "whereBound") {
       // Handle properties separately
-      this.compiledData[type].lower = callIfNecessaryArray(this.data[type].lower, context);
-      this.compiledData[type].upper = callIfNecessaryArray(this.data[type].upper, context);
+      this.compiledData[type].lower = callIfNecessaryArray(
+      this.data[type].lower,
+      context);
+
+      this.compiledData[type].upper = callIfNecessaryArray(
+      this.data[type].upper,
+      context);
+
     } else if (type === "select") {
       /*
-       * NOTICE: locking select can cause additional selects to be added, so the
-       * length of this.data[type] may increase during the operation. This is
-       * why we handle this.locks[type] separately.
-       */
+                                    * NOTICE: locking select can cause additional selects to be added, so the
+                                    * length of this.data[type] may increase during the operation. This is
+                                    * why we handle this.locks[type] separately.
+                                    */
+
       // Assume that duplicate fields must be identical, don't output the same
       // key multiple times
       const seenFields = {};
       const data = [];
-      const selects = this.data[type]; // DELIBERATE slow loop, see NOTICE above
+      const selects = this.data[type];
 
+      // DELIBERATE slow loop, see NOTICE above
       for (let i = 0; i < selects.length; i++) {
-        const [valueOrGenerator, columnName] = selects[i]; // $FlowFixMe
-
+        const [valueOrGenerator, columnName] = selects[i];
+        // $FlowFixMe
         if (!seenFields[columnName]) {
           // $FlowFixMe
           seenFields[columnName] = true;
           data.push([callIfNecessary(valueOrGenerator, context), columnName]);
           locks = beforeLock[type];
-
           if (locks) {
             beforeLock[type] = [];
-
             for (let i = 0, l = locks.length; i < l; i++) {
               locks[i]();
             }
           }
         }
       }
-
       this.locks[type] = isDev ? new Error("Initally locked here").stack : true;
       this.compiledData[type] = data;
     } else if (type === "orderBy") {
-      this.compiledData[type] = this.data[type].map(([a, b, c]) => [callIfNecessary(a, context), b, c]);
+      this.compiledData[type] = this.data[type].map(([a, b, c]) => [
+      callIfNecessary(a, context),
+      b,
+      c]);
+
     } else if (type === "from") {
       if (this.data.from) {
         const f = this.data.from;
@@ -728,36 +777,34 @@ order by (row_number() over (partition by 1)) desc`;
       throw new Error(`Wasn't expecting to lock '${type}'`);
     }
   }
-
   checkLock(type: string) {
     if (this.locks[type]) {
       if (typeof this.locks[type] === "string") {
-        throw new Error(`'${type}' has already been locked\n    ` + this.locks[type].replace(/\n/g, "\n    ") + "\n");
-      }
+        throw new Error(
+        `'${type}' has already been locked\n    ` +
+        this.locks[type].replace(/\n/g, "\n    ") +
+        "\n");
 
+      }
       throw new Error(`'${type}' has already been locked`);
     }
   }
-
   lockEverything() {
-    this._finalize(); // We must execute everything after `from` so we have the alias to reference
-
-
+    this._finalize();
+    // We must execute everything after `from` so we have the alias to reference
     this.lock("from");
     this.lock("join");
-    this.lock("orderBy"); // We must execute where after orderBy because cursor queries require all orderBy columns
-
+    this.lock("orderBy");
+    // We must execute where after orderBy because cursor queries require all orderBy columns
     this.lock("cursorComparator");
     this.lock("whereBound");
-    this.lock("where"); // 'where' -> 'whereBound' can affect 'offset'/'limit'
-
+    this.lock("where");
+    // 'where' -> 'whereBound' can affect 'offset'/'limit'
     this.lock("offset");
     this.lock("limit");
     this.lock("first");
-    this.lock("last"); // We must execute select after orderBy otherwise we cannot generate a cursor
-
+    this.lock("last");
+    // We must execute select after orderBy otherwise we cannot generate a cursor
     this.lock("selectCursor");
     this.lock("select");
-  }
-
-}
+  }}

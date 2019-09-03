@@ -5,18 +5,16 @@ type D = number;
 type E = string;
 type F = string | null | undefined;
 type G = {
-  a: number;
-};
+  a: number;};
+
 type H = {
-  a: number;
-  // comment
-  b: string | null | undefined;
-};
+  a: number; // comment
+  b: string | null | undefined;};
+
 type I = {
-  a: <T extends number, U>(b: T, c: U | number) => T;
-};
+  a: <T extends number, U>(b: T, c: U | number) => T;};
+
 type J = {
-  a: string;
-} & H & {
-  c: string;
-};
+  a: string;} &
+H &
+{c: string;};

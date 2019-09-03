@@ -117,6 +117,9 @@ export function _toTs(node: Flow | TSType | Node): TSType | Node {
     case 'TSPropertySignature':
       return node
 
+    case 'TypeAlias':
+      return typeAliasToTsTypeAliasDeclaration(node)
+
     case 'TypeAnnotation':
       return tsTypeAnnotation(toTsType(node))
 

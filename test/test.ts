@@ -4,7 +4,7 @@ import { readFile, writeFile } from 'mz/fs'
 import { basename, resolve } from 'path'
 import { compile } from '../src'
 
-let paths = ['e2e', 'rules', 'unit']
+let paths = ['rules', 'unit']
 
 // Kind of hacky thing to figure out if -u or --update-snapshots was passed to AVA.
 // We manually write expected output in this test.

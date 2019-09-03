@@ -1,23 +1,13 @@
 import { parse } from '@babel/parser'
 import generate from '@babel/generator'
-import traverse, { Node, Visitor } from '@babel/traverse'
+import traverse, { Node, Visitor, VisitNode } from '@babel/traverse'
 import { File } from '@babel/types'
-import { sync } from 'glob'
 import { dropWhile, pullAt } from 'lodash'
 import { EOL } from 'os'
-import { relative, resolve } from 'path'
+import { relative } from 'path'
+import { toTs } from './convert'
 
-type Warning = [string, string, number, number]
-type Rule = (warnings: Warning[]) => Visitor<Node>
-
-let rules = new Map<string, Rule>()
-
-export function addRule(ruleName: string, rule: Rule) {
-  if (rules.has(ruleName)) {
-    throw `A rule with the name "${ruleName}" is already defined`
-  }
-  rules.set(ruleName, rule)
-}
+export type Warning = [string, string, number, number]
 
 export async function compile(code: string, filename: string) {
   const parsed = parse(code, {
@@ -43,44 +33,34 @@ export async function compile(code: string, filename: string) {
 /**
  * @internal
  */
-export async function convert<T extends Node>(ast: T): Promise<[Warning[], T]> {
-  // load rules directory
-  await Promise.all(
-    sync(resolve(__dirname, './rules/*.js')).map(_ => import(_))
-  )
-
+export async function convert(ast: File): Promise<[Warning[], File]>
+export async function convert<T extends Node>(
+  ast: T
+): Promise<[Warning[], Node]> {
   let warnings: Warning[] = []
-  const order = [
-    '$Keys',
-    'Bounds',
-    'Casting',
-    'Exact',
-    'Variance',
-    'Indexer',
-    'TypeAlias'
-  ]
-  const keys = [...rules.keys()]
-  const all = [...order, ...keys.filter(k => order.indexOf(k) < 0)]
-  const visitor: { [key: string]: any } = {}
-  all.forEach(i => {
-    const visGen = rules.get(i)!
-    if (!visGen) return
-    const vis = visGen(warnings)
-    Object.keys(vis).forEach(k => {
-      if (!visitor[k]) {
-        visitor[k] = (vis as any)[k]
-      } else {
-        const oldVis = visitor[k]
-        visitor[k] = (...args: any[]) => {
-          oldVis(...args)
-          ;(vis as any)[k](...args)
-        }
-      }
-    })
-  })
-  traverse(ast, visitor)
-
-  return [warnings, ast]
+  const outAst = toTs(ast, warnings)
+  const visit: VisitNode<any, any> = path => {
+    path.replaceWith(toTs(path.node, warnings))
+  }
+  const visitor: Visitor<Node> = {
+    GenericTypeAnnotation: visit,
+    TypeCastExpression: visit,
+    TypeParameterDeclaration: visit,
+    ObjectTypeAnnotation: visit,
+    FunctionTypeAnnotation: visit,
+    ObjectTypeIndexer: visit,
+    InterfaceDeclaration: visit,
+    NullableTypeAnnotation: visit,
+    OpaqueType: visit,
+    TypeAlias: visit,
+    TypeAnnotation: visit,
+    ImportDeclaration: visit,
+    ExportNamedDeclaration: visit,
+    VoidTypeAnnotation: visit,
+    ObjectTypeProperty: visit
+  }
+  traverse(outAst, visitor)
+  return [warnings, outAst]
 }
 
 function stripAtFlowAnnotation(ast: File): File {

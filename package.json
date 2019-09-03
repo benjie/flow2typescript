@@ -11,7 +11,7 @@
   "author": "Boris Cherny <bcherny@fb.com>",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && chmod +x dist/src/cli.js",
     "build:watch": "tsc -w",
     "clean": "rm -rf ./dist",
     "lint": "tslint src/**/*.ts && npm run prettier:check",
@@ -22,6 +22,7 @@
     "pretest": "npm run build",
     "tdd": "concurrently -k 'npm run build:watch' 'npm run test:watch'",
     "test": "ava --verbose",
+    "test:only": "ava --verbose",
     "test:debug": "node --inspect-brk ./node_modules/ava/profile.js ./dist/test/test.js",
     "test:watch": "ava -w"
   },

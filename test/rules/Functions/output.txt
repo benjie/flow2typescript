@@ -1,7 +1,7 @@
 type Functions1 = (a: number, b: string) => string;
 type Functions2 = (a: number, b: string) => string;
 type Functions3 = (...args: string[]) => string;
-export default function Functions3(a: number, b: A & B, {
+export default function Functions4(a: number, b: A & B, {
   c,
   d,
   e
@@ -13,7 +13,7 @@ export default function Functions3(a: number, b: A & B, {
   return "";
 }
 
-function Functions4(a: string, b: C | ((d: E) => F), g: G) {
+function Functions5(a: string, b: C | ((d: E) => F), g: G) {
   return '';
 }
 

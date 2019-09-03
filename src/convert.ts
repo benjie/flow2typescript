@@ -254,9 +254,7 @@ export function _toTsType(node: FlowType | Node): TSType {
     case 'Identifier':
     case 'QualifiedTypeIdentifier':
       throw new Error(
-        `'${
-          node.type
-        }' passed to toTsType, instead use \`tsTypeReference(toTsTypeName(node))\``
+        `'${node.type}' passed to toTsType, instead use \`tsTypeReference(toTsTypeName(node))\``
       )
 
     case 'TypeAnnotation':
@@ -410,9 +408,7 @@ export function getId(
       } else {
         // TODO: convert this properly!
         console.warn(
-          `Unimplemented in 'getId': GenericTypeAnnotation with node.id.type === '${
-            node.id.type
-          }'`
+          `Unimplemented in 'getId': GenericTypeAnnotation with node.id.type === '${node.id.type}'`
         )
         // @ts-ignore
         return node.id
@@ -435,39 +431,35 @@ function functionToTsType(node: FunctionTypeAnnotation): TSFunctionType {
   if (node.returnType && !returnTypeType) {
     throw new Error(`Could not convert return type '${node.returnType.type}'`)
   }
-  let f = tsFunctionType(
+  let paramNames = node.params
+    .map(_ => _.name)
+    .filter(_ => _ !== null)
+    .map(_ => (_ as Identifier).name)
+  const parameters: Array<Identifier | RestElement> = node.params.map(_ => {
+    let name = _.name && _.name.name
+
+    // Generate param name? (Required in TS, optional in Flow)
+    if (name == null) {
+      name = generateFreeIdentifier(paramNames)
+      paramNames.push(name)
+    }
+
+    let id = identifier(name)
+
+    if (_.typeAnnotation) {
+      id.typeAnnotation = tsTypeAnnotation(toTsType(_.typeAnnotation))
+    }
+
+    return id
+  })
+  if (node.rest) {
+    parameters.push(toTsRestParameter(node.rest))
+  }
+  return tsFunctionType(
     typeParams,
+    parameters,
     node.returnType ? tsTypeAnnotation(returnTypeType as any) : undefined
   )
-  // Params
-  if (node.params) {
-    let paramNames = node.params
-      .map(_ => _.name)
-      .filter(_ => _ !== null)
-      .map(_ => (_ as Identifier).name)
-    f.parameters = node.params.map(_ => {
-      let name = _.name && _.name.name
-
-      // Generate param name? (Required in TS, optional in Flow)
-      if (name == null) {
-        name = generateFreeIdentifier(paramNames)
-        paramNames.push(name)
-      }
-
-      let id = identifier(name)
-
-      if (_.typeAnnotation) {
-        id.typeAnnotation = tsTypeAnnotation(toTsType(_.typeAnnotation))
-      }
-
-      return id
-    })
-    if (node.rest) {
-      f.parameters.push(toTsRestParameter(node.rest))
-    }
-  }
-
-  return f
 }
 
 function toTsRestParameter(rest: FunctionTypeParam): RestElement {

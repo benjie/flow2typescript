@@ -215,7 +215,7 @@ export function _toTs(
           node.loc ? node.loc.start.column : 0
         ])
       }
-      let _ = tsPropertySignature(
+      const _ = tsPropertySignature(
         node.key,
         tsTypeAnnotation(toTs(node.value, warnings))
       )

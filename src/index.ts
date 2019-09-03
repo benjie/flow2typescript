@@ -47,21 +47,21 @@ export async function convert<T extends Node>(
     path.replaceWith(toTs(path.node, warnings))
   }
   const visitor: Visitor<Node> = {
-    GenericTypeAnnotation: visit,
-    TypeCastExpression: visit,
-    TypeParameterDeclaration: visit,
-    ObjectTypeAnnotation: visit,
+    ExportNamedDeclaration: visit,
     FunctionTypeAnnotation: visit,
-    ObjectTypeIndexer: visit,
+    GenericTypeAnnotation: visit,
+    ImportDeclaration: visit,
     InterfaceDeclaration: visit,
     NullableTypeAnnotation: visit,
+    ObjectTypeAnnotation: visit,
+    ObjectTypeIndexer: visit,
+    ObjectTypeProperty: visit,
     OpaqueType: visit,
     TypeAlias: visit,
     TypeAnnotation: visit,
-    ImportDeclaration: visit,
-    ExportNamedDeclaration: visit,
-    VoidTypeAnnotation: visit,
-    ObjectTypeProperty: visit
+    TypeCastExpression: visit,
+    TypeParameterDeclaration: visit,
+    VoidTypeAnnotation: visit
   }
   traverse(outAst, visitor)
   return [warnings, outAst]

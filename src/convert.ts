@@ -58,7 +58,8 @@ import {
   tsParenthesizedType,
   RestElement,
   FunctionTypeParam,
-  restElement
+  restElement,
+  tsTypeOperator
 } from '@babel/types'
 import { generateFreeIdentifier } from './utils'
 
@@ -283,6 +284,10 @@ export function _toTsType(node: FlowType | Node): TSType {
         ])
         */
         return toTsType(node.typeParameters!.params[0])
+      } else if (node.id.type === 'Identifier' && node.id.name === '$Keys') {
+        const op = tsTypeOperator(toTsType(node.typeParameters!.params[0]))
+        op.operator = 'keyof'
+        return op
       } else if (
         node.id.type === 'Identifier' &&
         node.id.name === '$ReadOnly'

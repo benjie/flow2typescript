@@ -11,7 +11,7 @@ type G = {
 }
 type H = {
   a: number, // comment
-  b: ?string
+  b: ?string, // comment2
 }
 type I = {
   a<T: number, U>(b: T, c: U | number): T;

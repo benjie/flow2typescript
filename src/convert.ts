@@ -229,6 +229,9 @@ function copyCommentsToFrom(to: TSType | Node, from: FlowType | TSType | Node) {
   to.leadingComments = from.leadingComments
   to.innerComments = from.innerComments
   to.trailingComments = from.trailingComments
+  to.start = from.start
+  to.end = from.end
+  to.loc = from.loc
 }
 
 export const toTs: typeof _toTs = (node: any) => {

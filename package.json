@@ -1,7 +1,7 @@
 {
   "name": "flow2typescript",
   "description": "Convert Flow source code to TypeScript",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "bin": {

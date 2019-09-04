@@ -5,7 +5,7 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "bin": {
-    "flow2ts": "dist/src/cli.js"
+    "flow2typescript": "dist/src/cli.js"
   },
   "repository": "git@github.com:benjie/flow2typescript.git",
   "author": "Benjie Gillam <code@benjiegillam.com>",

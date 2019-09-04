@@ -60,7 +60,7 @@ function printHelp() {
   process.stdout.write(
     `
 ${pkg.name} ${pkg.version}
-Usage: flow2ts [--input, -i] [IN_FILE] [--output, -o] [OUT_FILE]
+Usage: flow2typescript [--input, -i] [IN_FILE] [--output, -o] [OUT_FILE]
 
 With no IN_FILE, or when IN_FILE is -, read standard input.
 With no OUT_FILE and when IN_FILE is specified, create .ts file in the same directory.

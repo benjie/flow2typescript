@@ -1,7 +1,7 @@
 import test from 'ava'
 import { sync } from 'glob'
 import { readFile, writeFile } from 'mz/fs'
-import { basename, dirname, resolve } from 'path'
+import { dirname, resolve, relative } from 'path'
 import { compile } from '../src'
 
 // Kind of hacky thing to figure out if -u or --update-snapshots was passed to AVA.
@@ -17,7 +17,7 @@ const inputPaths = sync(resolve(__dirname, `../../test/**/input.txt`))
 const tests = inputPaths.map(inputPath => ({
   inputPath,
   outputPath: dirname(inputPath) + '/output.txt',
-  name: basename(dirname(inputPath))
+  name: relative(process.cwd() + '/test', dirname(inputPath))
 }))
 
 tests.forEach(({ name, inputPath, outputPath }) =>

@@ -306,7 +306,6 @@ export function _toTs(
         (node as any).impltype
       )
     default:
-      //console.dir(node)
       return node
   }
 }

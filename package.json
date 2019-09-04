@@ -1,14 +1,14 @@
 {
-  "name": "flow-to-typescript",
-  "description": "Compile Flow to TypeScript",
-  "version": "0.0.1",
+  "name": "flow2typescript",
+  "description": "Convert Flow source code to TypeScript",
+  "version": "0.0.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "bin": {
     "flow2ts": "dist/src/cli.js"
   },
-  "repository": "git@github.com:bcherny/flow-to-typescript.git",
-  "author": "Boris Cherny <bcherny@fb.com>",
+  "repository": "git@github.com:benjie/flow2typescript.git",
+  "author": "Benjie Gillam <code@benjiegillam.com>",
   "license": "MIT",
   "scripts": {
     "build": "tsc && chmod +x dist/src/cli.js",
@@ -16,9 +16,9 @@
     "clean": "rm -rf ./dist",
     "lint": "tslint src/**/*.ts && npm run prettier:check",
     "prettier": "prettier 'src/**/*.[tj]s'",
-    "prettier:fix": "npm run prettier --write",
-    "prettier:check": "npm run prettier -l",
-    "prepublishOnly": "npm run clean && npm run lint && npm run build -- -d",
+    "prettier:fix": "npm run prettier -- --write",
+    "prettier:check": "npm run prettier -- --list-different",
+    "prepublishOnly": "npm run clean && npm run lint && tsc -d",
     "pretest": "npm run build",
     "tdd": "concurrently -k 'npm run build:watch' 'npm run test:watch'",
     "test": "ava --verbose",
@@ -54,5 +54,8 @@
     "files": [
       "./dist/test/test.js"
     ]
-  }
+  },
+  "files": [
+    "dist/src"
+  ]
 }

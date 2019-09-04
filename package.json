@@ -35,6 +35,7 @@
     "@types/babel__traverse": "^7.0.7",
     "glob": "^7.1.4",
     "lodash": "^4.17.15",
+    "minimist": "^1.2.0",
     "mz": "^2.7.0",
     "stdin": "^0.0.1"
   },

@@ -238,9 +238,7 @@ export function _toTs(
 
     case 'ExportDefaultDeclaration':
       const declaration = node.declaration
-      if (declaration.type === 'FunctionDeclaration') {
-        node.declaration = toTs(declaration, warnings, context) as any
-      }
+      node.declaration = toTs(declaration, warnings, context) as any
       return node
 
     case 'FunctionDeclaration':

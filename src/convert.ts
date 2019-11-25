@@ -65,7 +65,13 @@ import {
   Statement,
   typeAlias,
   importDeclaration,
-  tsVoidKeyword
+  tsVoidKeyword,
+  FunctionDeclaration,
+  ArrayPattern,
+  AssignmentPattern,
+  ObjectPattern,
+  TSParameterProperty,
+  functionDeclaration
 } from '@babel/types'
 import { generateFreeIdentifier } from './utils'
 import { file } from '@babel/types'
@@ -181,7 +187,7 @@ export function _toTs(
       return typeAliasToTsTypeAliasDeclaration(node, warnings)
 
     case 'TypeAnnotation':
-      return tsTypeAnnotation(toTsType(node, warnings))
+      return tsTypeAnnotation(toTsType(node, warnings, context))
 
     case 'InterfaceDeclaration':
       const { properties, spreads } = objectTypeAnnotationPropertiesAndSpreads(
@@ -229,6 +235,9 @@ export function _toTs(
     case 'VoidTypeAnnotation':
     case 'NumberLiteralTypeAnnotation':
       return toTsType(node, warnings, context)
+
+    case 'FunctionDeclaration':
+      return functionDeclarationToTsType(node, warnings)
 
     case 'ObjectTypeIndexer':
       // return tsTypeLiteral([tsIndexSignature(node.parameters)])
@@ -398,7 +407,7 @@ export function _toTsType(
       )
 
     case 'TypeAnnotation':
-      return toTsType(node.typeAnnotation, warnings)
+      return toTsType(node.typeAnnotation, warnings, context)
 
     case 'AnyTypeAnnotation':
       return tsAnyKeyword()
@@ -596,6 +605,84 @@ export function getId(
     default:
       throw ReferenceError('typeof query must reference a node that has an id')
   }
+}
+
+function functionDeclarationToTsType(
+  node: FunctionDeclaration,
+  warnings: Warning[]
+): FunctionDeclaration {
+  let typeParams
+
+  if (node.typeParameters && node.typeParameters.type !== 'Noop') {
+    typeParams = tsTypeParameterDeclaration(
+      (node.typeParameters.params as (TypeParameter | TSTypeParameter)[]).map(
+        param => {
+          if (param.type === 'TSTypeParameter') {
+            return param
+          } else {
+            return toTsTypeParameter(param, warnings)
+          }
+        }
+      )
+    )
+  }
+
+  const returnTypeType = node.returnType
+    ? toTs(node.returnType, warnings, { functionReturnType: true })
+    : null
+  if (node.returnType && !returnTypeType) {
+    throw new Error(`Could not convert return type '${node.returnType.type}'`)
+  }
+  let paramNames = node.params
+    .map((_: any) => _.name)
+    .filter(_ => _ !== null)
+    .map(_ => (_ as Identifier).name)
+  const parameters: Array<
+    | Identifier
+    | RestElement
+    | AssignmentPattern
+    | ObjectPattern
+    | ArrayPattern
+    | TSParameterProperty
+  > = node.params.map(_ => {
+    if (_.type === 'ArrayPattern') {
+      return _
+    }
+    if (_.type === 'AssignmentPattern') {
+      return _
+    }
+    if (_.type === 'RestElement') {
+      return _
+    }
+    if (_.type === 'ObjectPattern') {
+      return _
+    }
+    if (_.type === 'TSParameterProperty') {
+      return _
+    }
+    let name = _.name
+
+    // Generate param name? (Required in TS, optional in Flow)
+    if (name == null) {
+      name = generateFreeIdentifier(paramNames)
+      paramNames.push(name)
+    }
+
+    let id = identifier(name)
+
+    if (_.typeAnnotation) {
+      id.typeAnnotation = tsTypeAnnotation(toTsType(_.typeAnnotation, warnings))
+    }
+
+    return id
+  })
+  const fn = functionDeclaration(node.id, parameters, node.body)
+  fn.returnType = returnTypeType ? (returnTypeType as any) : undefined
+  fn.typeParameters = typeParams || null
+  fn.async = node.async
+  fn.declare = node.declare
+  fn.generator = node.generator
+  return fn
 }
 
 function functionToTsType(

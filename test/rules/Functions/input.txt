@@ -29,3 +29,5 @@ function Functions5(a: string, b: C | (d: E) => F, g: G) {
 function deprecate(fn: (...input: Array<any>) => string, message: string) {
   return ''
 }
+
+function noop(): void {}

@@ -234,13 +234,19 @@ export function _toTs(
       )
 
     case 'TypeParameterDeclaration':
-      let params = node.params.map(_ => {
+      let params = node.params.map((_, idx) => {
         let d = ((_ as any) as TypeParameter).default
+        const { name } = _
+        if (!name) {
+          throw new Error(
+            `TypeParameterDeclaration parameter ${idx} has no name`
+          )
+        }
         let p = tsTypeParameter(
           hasBound(_) ? toTsType(_.bound.typeAnnotation, warnings) : undefined,
-          d ? toTs(d, warnings) : undefined
+          d ? toTs(d, warnings) : undefined,
+          name
         )
-        p.name = _.name
         return p
       })
 
@@ -494,18 +500,24 @@ const toTsIndexSignature: typeof _toTsIndexSignature = (
 }
 
 function toTsTypeParameter(
-  _: TypeParameter,
+  typeParameter: TypeParameter,
   warnings: Warning[]
 ): TSTypeParameter {
   // TODO: How is this possible?
-  if (isTSTypeParameter(_)) {
-    return _
+  if (isTSTypeParameter(typeParameter)) {
+    return typeParameter
   }
 
-  let constraint = _.bound ? toTsType(_.bound, warnings) : undefined
-  let default_ = _.default ? toTs(_.default, warnings) : undefined
-  let param = tsTypeParameter(constraint, default_)
-  param.name = _.name
+  let constraint = typeParameter.bound
+    ? toTsType(typeParameter.bound, warnings)
+    : undefined
+  let default_ = typeParameter.default
+    ? toTs(typeParameter.default, warnings)
+    : undefined
+  if (!typeParameter.name) {
+    throw new Error('toTsTypeParameter: no name in type parameter')
+  }
+  let param = tsTypeParameter(constraint, default_, typeParameter.name)
   return param
 }
 

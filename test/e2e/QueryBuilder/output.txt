@@ -28,7 +28,7 @@ class QueryBuilder {
     first: number | null | undefined;
     last: number | null | undefined;
     beforeLock: {
-      [a: string]: Array<() => undefined> | null;};
+      [a: string]: Array<() => void> | null;};
 
     cursorComparator: CursorComparator | null | undefined;
     liveConditions: Array<
@@ -208,7 +208,7 @@ class QueryBuilder {
 
   // ----------------------------------------
 
-  beforeLock(field: string, fn: () => undefined) {
+  beforeLock(field: string, fn: () => void) {
     this.checkLock(field);
     if (!this.data.beforeLock[field]) {
       this.data.beforeLock[field] = [];
@@ -220,7 +220,7 @@ class QueryBuilder {
   makeLiveCollection(
   table: PgClass,
   // eslint-disable-next-line flowtype/no-weak-types
-  cb?: (checker: (data: any) => (record: any) => boolean) => undefined)
+  cb?: (checker: (data: any) => (record: any) => boolean) => void)
   {
     /* the actual condition doesn't matter hugely, 'select' should work */
     if (!this.rootValue || !this.rootValue.liveConditions) return;

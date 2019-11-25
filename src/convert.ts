@@ -64,13 +64,18 @@ import {
   Program,
   Statement,
   typeAlias,
-  importDeclaration
+  importDeclaration,
+  tsVoidKeyword
 } from '@babel/types'
 import { generateFreeIdentifier } from './utils'
 import { file } from '@babel/types'
 import { program } from '@babel/types'
 import { Warning } from '.'
 import { exportNamedDeclaration } from '@babel/types'
+
+interface ToTsContext {
+  functionReturnType?: boolean
+}
 
 export function typeAliasToTsTypeAliasDeclaration(
   node: TypeAlias,
@@ -91,23 +96,50 @@ export function typeAliasToTsTypeAliasDeclaration(
 }
 
 // TODO: Add more overloads
-export function _toTs(node: File, warnings: Warning[]): File
-export function _toTs(node: Program, warnings: Warning[]): Program
-export function _toTs(node: Statement, warnings: Warning[]): Statement
+export function _toTs(
+  node: File,
+  warnings: Warning[],
+  context?: ToTsContext
+): File
+export function _toTs(
+  node: Program,
+  warnings: Warning[],
+  context?: ToTsContext
+): Program
+export function _toTs(
+  node: Statement,
+  warnings: Warning[],
+  context?: ToTsContext
+): Statement
 export function _toTs(
   node: ObjectTypeProperty,
-  warnings: Warning[]
+  warnings: Warning[],
+  context?: ToTsContext
 ): TSPropertySignature
 export function _toTs(
   node: InterfaceExtends,
-  warnings: Warning[]
+  warnings: Warning[],
+  context?: ToTsContext
 ): TSExpressionWithTypeArguments
-export function _toTs<T extends TSType>(node: T, warnings: Warning[]): T
-export function _toTs(node: Node, warnings: Warning[]): TSType
-export function _toTs(node: Flow, warnings: Warning[]): TSType
+export function _toTs<T extends TSType>(
+  node: T,
+  warnings: Warning[],
+  context?: ToTsContext
+): T
+export function _toTs(
+  node: Node,
+  warnings: Warning[],
+  context?: ToTsContext
+): TSType
+export function _toTs(
+  node: Flow,
+  warnings: Warning[],
+  context?: ToTsContext
+): TSType
 export function _toTs(
   node: Flow | TSType | Node,
-  warnings: Warning[]
+  warnings: Warning[],
+  context?: ToTsContext
 ): TSType | Node {
   switch (node.type) {
     // TS types
@@ -196,7 +228,7 @@ export function _toTs(
     case 'UnionTypeAnnotation':
     case 'VoidTypeAnnotation':
     case 'NumberLiteralTypeAnnotation':
-      return toTsType(node, warnings)
+      return toTsType(node, warnings, context)
 
     case 'ObjectTypeIndexer':
       // return tsTypeLiteral([tsIndexSignature(node.parameters)])
@@ -325,8 +357,12 @@ function copyCommentsToFrom(to: TSType | Node, from: FlowType | TSType | Node) {
   to.loc = from.loc
 }
 
-export const toTs: typeof _toTs = (node: any, warnings: Warning[]) => {
-  const newNode = _toTs(node, warnings)
+export const toTs: typeof _toTs = (
+  node: any,
+  warnings: Warning[],
+  context?: ToTsContext
+) => {
+  const newNode = _toTs(node, warnings, context)
   if (newNode !== node) {
     copyCommentsToFrom(newNode, node)
   }
@@ -345,7 +381,11 @@ export function toTsTypeName(
   throw new Error('Could not convert to TS identifier')
 }
 
-export function _toTsType(node: FlowType | Node, warnings: Warning[]): TSType {
+export function _toTsType(
+  node: FlowType | Node,
+  warnings: Warning[],
+  context?: ToTsContext
+): TSType {
   if (node.type.match(/^TS[A-Z]/)) {
     // @ts-ignore A `TS*` type has somehow made it into here; something's not obeying the types.
     return node
@@ -464,7 +504,12 @@ export function _toTsType(node: FlowType | Node, warnings: Warning[]): TSType {
         })
       )
     case 'VoidTypeAnnotation':
-      return tsUndefinedKeyword()
+      if (context && context.functionReturnType) {
+        // Void is only appropriate as a function return type
+        return tsVoidKeyword()
+      } else {
+        return tsUndefinedKeyword()
+      }
     case 'ExistsTypeAnnotation':
       return tsAnyKeyword()
     default:
@@ -472,8 +517,12 @@ export function _toTsType(node: FlowType | Node, warnings: Warning[]): TSType {
   }
 }
 
-export const toTsType: typeof _toTsType = (node, warnings: Warning[]) => {
-  const newNode = _toTsType(node, warnings)
+export const toTsType: typeof _toTsType = (
+  node,
+  warnings: Warning[],
+  context?: ToTsContext
+) => {
+  const newNode = _toTsType(node, warnings, context)
   copyCommentsToFrom(newNode, node)
   return newNode
 }
@@ -564,7 +613,7 @@ function functionToTsType(
   }
 
   const returnTypeType = node.returnType
-    ? toTs(node.returnType, warnings)
+    ? toTs(node.returnType, warnings, { functionReturnType: true })
     : null
   if (node.returnType && !returnTypeType) {
     throw new Error(`Could not convert return type '${node.returnType.type}'`)

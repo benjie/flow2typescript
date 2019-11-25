@@ -29,3 +29,5 @@ function deprecate(fn: (...input: Array<any>) => string, message: string) {
 }
 
 function noop(): void {}
+
+function noop2(): Promise<void> | void {}

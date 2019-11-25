@@ -445,7 +445,7 @@ export function _toTsType(
         return tsTypeReference(
           toTsTypeName(node.id),
           tsTypeParameterInstantiation(
-            node.typeParameters.params.map(p => toTsType(p, warnings))
+            node.typeParameters.params.map(p => toTsType(p, warnings, context))
           )
         )
       } else {
@@ -505,7 +505,7 @@ export function _toTsType(
     case 'UnionTypeAnnotation':
       return tsUnionType(
         node.types.map(type => {
-          const tsType = toTs(type, warnings)
+          const tsType = toTs(type, warnings, context)
           if (tsType.type === 'TSFunctionType') {
             return tsParenthesizedType(tsType)
           }

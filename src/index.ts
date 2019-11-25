@@ -101,6 +101,7 @@ function backfillMissingComments<T extends Node>(ast: T, code: string): void {
       console.error(unseenComments)
       throw new Error('Failed to move all comments into the AST; aborting')
     }
+    console.log('Successfully backfilled comments into the AST')
   }
 }
 

@@ -30,8 +30,8 @@
     ],
     "one-variable-per-declaration": [true, "ignore-for-loop"],
     "ordered-imports": [false],
-    "quotemark": [true, "single"],
-    "semicolon": [true, "never"],
+    "quotemark": [false],
+    "semicolon": [false],
     "trailing-comma": [true, { "multiline": "never", "singleline": "never" }],
     "triple-equals": [true, "allow-null-check"],
     "use-isnan": true

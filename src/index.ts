@@ -75,12 +75,15 @@ function backfillMissingComments<T extends Node>(ast: T, code: string): void {
     console.log('Attempting to add them back into the AST')
     traverse(ast, {
       enter(path) {
-        const node = path.node
+        let node = path.node
+        if (node && (node as any).typeAnnotation) {
+          node = (node as any).typeAnnotation
+        }
         for (const comment of unseenComments) {
           if (
             node.end &&
             node.end < comment.start &&
-            node.end > comment.start - 3
+            node.end > comment.start - 20
           ) {
             const inBetween = code.substring(node.end, comment.start)
             if (inBetween.match(/^(\s*[,;])?\s*$/)) {
@@ -150,6 +153,9 @@ export async function convert<T extends Node>(
 }
 
 function stripAtFlowAnnotation(ast: File): File {
+  if (!ast.program.body.length) {
+    return ast
+  }
   let { leadingComments } = ast.program.body[0]
   if (leadingComments) {
     let index = leadingComments.findIndex(_ => _.value.trim() === '@flow')

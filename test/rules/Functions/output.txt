@@ -4,9 +4,9 @@ type Functions2 = (a: number, b: string) => string;
 
 type Functions3 = (...args: string[]) => string;
 
-export default function Functions4(
-a: number,
-b: A & B,
+export default function Functions4(a:
+number, b:
+A & B,
 {
   c,
   d,

@@ -236,6 +236,13 @@ export function _toTs(
     case 'NumberLiteralTypeAnnotation':
       return toTsType(node, warnings, context)
 
+    case 'ExportDefaultDeclaration':
+      const declaration = node.declaration
+      if (declaration.type === 'FunctionDeclaration') {
+        node.declaration = toTs(declaration, warnings, context) as any
+      }
+      return node
+
     case 'FunctionDeclaration':
       return functionDeclarationToTsType(node, warnings)
 
@@ -633,10 +640,7 @@ function functionDeclarationToTsType(
   if (node.returnType && !returnTypeType) {
     throw new Error(`Could not convert return type '${node.returnType.type}'`)
   }
-  let paramNames = node.params
-    .map((_: any) => _.name)
-    .filter(_ => _ !== null)
-    .map(_ => (_ as Identifier).name)
+  let paramNames = node.params.map((_: any) => _.name).filter(_ => _ !== null)
   const parameters: Array<
     | Identifier
     | RestElement

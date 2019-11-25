@@ -1,0 +1,1 @@
+export default function swallowError(e: Error): void {}
